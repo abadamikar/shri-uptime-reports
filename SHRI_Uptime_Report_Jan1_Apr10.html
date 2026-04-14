@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SHRI Uptime Report — Jan 01, 2026 to Apr 09, 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8fafc;color:#1e293b;line-height:1.6}
+  .header{background:#fff;border-bottom:1px solid #e2e8f0;padding:28px 40px}
+  .header-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+  .header h1{font-size:1.55rem;font-weight:700;color:#0f172a;letter-spacing:-0.02em}
+  .header-meta{font-size:.82rem;color:#64748b;margin-top:4px}
+  .header-meta strong{color:#334155}
+  .period-badge{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:8px 16px;font-size:.85rem;color:#475569;white-space:nowrap}
+  .period-badge .dot{width:8px;height:8px;border-radius:50%;background:#22c55e}
+  .main{max-width:1200px;margin:0 auto;padding:32px 40px}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+  @media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+  .card-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:4px}
+  .card-value{font-size:2rem;font-weight:700;color:#0f172a;line-height:1.1}
+  .card-sub{font-size:.78rem;color:#64748b;margin-top:6px;line-height:1.4}
+  .section-title{font-size:.95rem;font-weight:700;color:#0f172a;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;display:flex;align-items:center;gap:8px}
+  .section{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px 28px;margin-bottom:24px}
+  .section.warning{border-color:#fbbf24;background:#fffbeb}
+  .section.warning .section-title{color:#92400e}
+  .warning-icon{display:inline-block;width:18px;height:18px;background:#f59e0b;color:#fff;border-radius:50%;text-align:center;font-size:.7rem;font-weight:700;line-height:18px;flex-shrink:0}
+  .placeholder-msg{color:#94a3b8;font-size:.875rem;font-style:italic;padding:24px 0}
+  .chart-wrap{position:relative;height:280px}
+  table{width:100%;border-collapse:collapse;font-size:.875rem}
+  th{text-align:left;padding:10px 14px;background:#f8fafc;color:#64748b;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0}
+  td{padding:11px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f8fafc}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;color:#334155}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .school-tag{display:inline-block;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;background:#e0f2fe;color:#0369a1;border-radius:4px;padding:1px 5px;vertical-align:middle;margin-left:4px}
+  .donut-grid{display:grid;grid-template-columns:300px 1fr;gap:32px;align-items:center}
+  @media(max-width:700px){.donut-grid{grid-template-columns:1fr}}
+  .donut-wrap{position:relative;height:300px}
+  .donut-info h4{font-size:.9rem;font-weight:600;color:#334155;margin-bottom:8px}
+  .donut-info p{font-size:.82rem;color:#64748b;line-height:1.7}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:.8rem;color:#475569}
+  .legend-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+  .bar-wrap{position:relative;height:702px}
+  .dq-note{font-size:.8rem;color:#92400e;background:#fef9ec;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:16px;line-height:1.6}
+  .footer{text-align:center;padding:24px;font-size:.75rem;color:#94a3b8;border-top:1px solid #e2e8f0;background:#fff;margin-top:16px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <h1>SHRI Foundation — Facility Uptime Report</h1>
+      <div class="header-meta"><strong>27 facilities</strong>&nbsp;&middot;&nbsp;Source: LookerStudio / KoboToolbox</div>
+    </div>
+    <div class="period-badge"><span class="dot"></span>Jan 01, 2026 &ndash; Apr 09, 2026</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="cards">
+    <div class="card" style="--accent:#22c55e">
+      <div class="card-label">Overall Uptime</div>
+      <div class="card-value">99.60%</div>
+      <div class="card-sub">Weighted across all 27 facilities</div>
+    </div>
+    <div class="card" style="--accent:#f59e0b">
+      <div class="card-label">Total Hours Lost</div>
+      <div class="card-value">159h</div>
+      <div class="card-sub">9.94 equivalent days lost</div>
+    </div>
+    <div class="card" style="--accent:#ef4444">
+      <div class="card-label">Facilities with Shutdowns</div>
+      <div class="card-value">6</div>
+      <div class="card-sub">Patratu Rly Gate, Ramgarh, Basgoda, Urwan, Koderma, North Basgoda, Saram Bazar, Katiya Bus Stand, Ramgarh</div>
+    </div>
+    <div class="card" style="--accent:#6366f1">
+      <div class="card-label">Perfect Uptime</div>
+      <div class="card-value">21</div>
+      <div class="card-sub">facilities at 100% for this period</div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Monthly Average Uptime</div>
+    <div class="chart-wrap"><canvas id="monthlyChart"></canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Uptime by Facility</div>
+    <table>
+      <thead><tr>
+        <th>Facility</th>
+        <th style="text-align:right">Days Covered</th>
+        <th style="text-align:right">Hours Lost</th>
+        <th style="text-align:right">Days Functional</th>
+        <th style="text-align:right">Uptime %</th>
+      </tr></thead>
+      <tbody>
+      <tr>
+        <td>Patratu Rly Gate, Ramgarh</td>
+        <td class="num">99</td>
+        <td class="num">121h</td>
+        <td class="num">91.44</td>
+        <td class="num"><span class="badge" style="color:#b91c1c;background:#fee2e2">92.36%</span></td>
+      </tr>
+      <tr>
+        <td>Basgoda</td>
+        <td class="num">99</td>
+        <td class="num">16h</td>
+        <td class="num">98.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">98.99%</span></td>
+      </tr>
+      <tr>
+        <td>Urwan, Koderma</td>
+        <td class="num">73</td>
+        <td class="num">9h</td>
+        <td class="num">72.44</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">99.23%</span></td>
+      </tr>
+      <tr>
+        <td>North Basgoda</td>
+        <td class="num">99</td>
+        <td class="num">7h</td>
+        <td class="num">98.56</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">99.56%</span></td>
+      </tr>
+      <tr>
+        <td>Saram Bazar</td>
+        <td class="num">63</td>
+        <td class="num">3h</td>
+        <td class="num">62.81</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">99.70%</span></td>
+      </tr>
+      <tr>
+        <td>Katiya Bus Stand, Ramgarh</td>
+        <td class="num">99</td>
+        <td class="num">3h</td>
+        <td class="num">98.81</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">99.81%</span></td>
+      </tr>
+      <tr>
+        <td>Azad Nagar</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Peterbaar</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Patratu Block Campus, Ramgarh</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>PM SHRI School Basgoda <span class="school-tag">school</span></td>
+        <td class="num">52</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">52.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Nemua</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Mahuatand</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Katiya Market, Ramgarh</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Kasmar</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Karanpur</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Jaridih CSR</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>High School Dugdha <span class="school-tag">school</span></td>
+        <td class="num">19</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">19.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Gomia Block</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Gomia</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Dundibagh</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Dugdha Market</td>
+        <td class="num">98</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">98.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Dugdha Chhatghat</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Bela Museri</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Bairo</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Bahadurpur</td>
+        <td class="num">70</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">70.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Jaridih SBM</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr>
+      <tr>
+        <td>Vurahi</td>
+        <td class="num">99</td>
+        <td class="num"><span style="color:#94a3b8">—</span></td>
+        <td class="num">99.00</td>
+        <td class="num"><span class="badge" style="color:#15803d;background:#dcfce7">100.00%</span></td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Uptime % by Facility</div>
+    <div class="bar-wrap"><canvas id="barChart"></canvas></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">All Reported Issues</div>
+    <div class="legend"><span class="legend-item"><span class="legend-dot" style="background:#378ADD"></span><strong>Electrical</strong>&nbsp;53.2%</span> <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span><strong>Plumbing</strong>&nbsp;35.1%</span> <span class="legend-item"><span class="legend-dot" style="background:#BA7517"></span><strong>Technology</strong>&nbsp;6.9%</span> <span class="legend-item"><span class="legend-dot" style="background:#D85A30"></span><strong>Infrastructure</strong>&nbsp;4.3%</span> <span class="legend-item"><span class="legend-dot" style="background:#9E9E9E"></span><strong>Other</strong>&nbsp;0.4%</span></div>
+    <div class="donut-grid">
+      <div class="donut-wrap"><canvas id="donutAll"></canvas></div>
+      <div class="donut-info">
+        <h4>Issue Breakdown — 231 total issue records</h4>
+        <p>The <strong>outer ring</strong> shows the parent category; the <strong>inner ring</strong> shows specific sub-issues. Hover over any segment to see the name, count, and percentage.</p>
+        <p style="margin-top:12px">Electrical issues are the largest category, driven primarily by external electrical disruptions (<em>Elecext</em>). Plumbing — especially external water supply failures — is the second largest.</p>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-title">Issues That Caused Shutdowns</div>
+    <div class="legend"><span class="legend-item"><span class="legend-dot" style="background:#378ADD"></span><strong>Electrical</strong>&nbsp;30.0%</span> <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span><strong>Plumbing</strong>&nbsp;65.0%</span> <span class="legend-item"><span class="legend-dot" style="background:#D85A30"></span><strong>Infrastructure</strong>&nbsp;5.0%</span></div>
+    <div class="donut-grid">
+      <div class="donut-wrap"><canvas id="donutSd"></canvas></div>
+      <div class="donut-info">
+        <h4>Shutdown-Causing Issues — 40 records</h4>
+        <p>Only issues where <em>Shutdown? = yes</em> and hours were recorded. The <strong>outer ring</strong> shows the category; the <strong>inner ring</strong> shows specific sub-issues.</p>
+        <p style="margin-top:12px">Plumbing accounts for the majority of shutdown-causing events, with external water supply failures (<em>Watersupplyexternal</em>) being the dominant driver.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="section warning">
+    <div class="section-title"><span class="warning-icon">!</span> Data Quality — Shutdowns Reported with No Hours Logged</div>
+    <div class="dq-note">
+      The 8 records below have <strong>Shutdown? = yes</strong> but no duration was entered.
+      They are counted as <strong>0 hours lost</strong> in all uptime calculations above.
+      Staff should be asked to update the original Kobo submissions with the correct hours, or confirm that no meaningful downtime occurred.
+    </div>
+    <table>
+      <thead><tr>
+        <th>Facility</th><th style="text-align:right">Date</th><th style="text-align:right">Shift</th>
+        <th>Category</th><th>Issue</th><th>Shift Shutdown</th>
+      </tr></thead>
+      <tbody>
+      <tr>
+        <td>Azad Nagar</td>
+        <td class="num">Feb 19, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Infrastructure</td>
+        <td>Gate</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Jaridih CSR</td>
+        <td class="num">Jan 01, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Electrical</td>
+        <td>Boring</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Jaridih CSR</td>
+        <td class="num">Jan 01, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Electrical</td>
+        <td>Boring</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Jaridih CSR</td>
+        <td class="num">Jan 02, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Electrical</td>
+        <td>Boring</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Jaridih CSR</td>
+        <td class="num">Jan 03, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Electrical</td>
+        <td>Boring</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Jaridih CSR</td>
+        <td class="num">Jan 04, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Electrical</td>
+        <td>Boring</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Katiya Market, Ramgarh</td>
+        <td class="num">Feb 23, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Plumbing</td>
+        <td>Watersupplyexternal</td>
+        <td>no</td>
+      </tr>
+      <tr>
+        <td>Patratu Rly Gate, Ramgarh</td>
+        <td class="num">Feb 24, 2026</td>
+        <td class="num">Shift 2</td>
+        <td>Plumbing</td>
+        <td>Watersupplyexternal</td>
+        <td>no</td>
+      </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  SHRI Foundation &nbsp;&middot;&nbsp; Sanitation and Health Rights in India &nbsp;&middot;&nbsp; Generated April 14, 2026
+</div>
+
+<script>
+
+const _mu = [99.928, 99.7928, 99.8445, 99.6228];
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'line',
+  data: {
+    labels: ["Jan 2026", "Feb 2026", "Mar 2026", "Apr 2026"],
+    datasets: [{
+      label: 'Uptime %', data: _mu,
+      borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.08)',
+      borderWidth: 2.5, tension: 0.35, fill: true,
+      pointRadius: 6, pointHoverRadius: 8,
+      pointBackgroundColor: _mu.map(v => v >= 97 ? '#16a34a' : '#dc2626'),
+      pointBorderColor: '#fff', pointBorderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toFixed(4)}%` } }
+    },
+    scales: {
+      y: {
+        min: 99.6, max: 100.0,
+        title: { display: true, text: 'Uptime %', color: '#64748b', font: { size: 12, weight: '500' } },
+        ticks: {
+          stepSize: 0.1,
+          callback: v => v.toFixed(1) + '%',
+          font: { size: 11 }
+        },
+        grid: { color: '#f1f5f9' }, border: { color: '#e2e8f0' }
+      },
+      x: {
+        title: { display: true, text: 'Month', color: '#64748b', font: { size: 12, weight: '500' } },
+        grid: { display: false },
+        ticks: { font: { size: 12 } }, border: { color: '#e2e8f0' }
+      }
+    }
+  }
+});
+Chart.register({
+  id: 'tl_SHRI_Uptime_Report_Jan1_Apr10_html',
+  afterDraw(chart) {
+    if (chart.canvas.id !== 'monthlyChart') return;
+    const {ctx, scales} = chart;
+    if (scales.y.min > 97 || scales.y.max < 97) return;
+    const y = scales.y.getPixelForValue(97);
+    ctx.save();
+    ctx.strokeStyle='#dc2626'; ctx.lineWidth=1.5; ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(scales.x.left,y); ctx.lineTo(scales.x.right,y); ctx.stroke();
+    ctx.setLineDash([]); ctx.fillStyle='#dc2626'; ctx.font='11px sans-serif';
+    ctx.fillText('97% target', scales.x.right-68, y-5);
+    ctx.restore();
+  }
+});
+
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Patratu Rly Gate, Ramgarh", "Basgoda", "Urwan, Koderma", "North Basgoda", "Saram Bazar", "Katiya Bus Stand, Ramgarh", "Azad Nagar", "Peterbaar", "Patratu Block Campus, Ramgarh", "PM SHRI School Basgoda", "Nemua", "Mahuatand", "Katiya Market, Ramgarh", "Kasmar", "Karanpur", "Jaridih CSR", "High School Dugdha", "Gomia Block", "Gomia", "Dundibagh", "Dugdha Market", "Dugdha Chhatghat", "Bela Museri", "Bairo", "Bahadurpur", "Jaridih SBM", "Vurahi"],
+    datasets: [{ label: 'Uptime %', data: [92.3611, 98.9899, 99.2295, 99.5581, 99.7024, 99.8106, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0], backgroundColor: ["#dc2626", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a", "#16a34a"], borderRadius: 4, borderSkipped: false }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(2)}%` } } },
+    scales: {
+      x: {
+        min: 50, max: 100,
+        title: { display: true, text: 'Uptime %', color: '#64748b', font: { size: 12, weight: '500' } },
+        ticks: { callback: v => v + '%', font: { size: 11 } },
+        grid: { color: '#f1f5f9' }, border: { color: '#e2e8f0' }
+      },
+      y: {
+        title: { display: true, text: 'Facility', color: '#64748b', font: { size: 12, weight: '500' } },
+        ticks: { font: { size: 11.5 }, color: '#334155' },
+        grid: { display: false }, border: { color: '#e2e8f0' }
+      }
+    }
+  }
+});
+
+function makeDonut(canvasId, outerLabels, outerData, outerColors, innerLabels, innerData, innerColors) {
+  const total = outerData.reduce((a,b)=>a+b,0);
+  new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: {
+      labels: [],
+      datasets: [
+        { customLabels: outerLabels, data: outerData, backgroundColor: outerColors, borderWidth: 3, borderColor: '#fff', hoverOffset: 6 },
+        { customLabels: innerLabels, data: innerData, backgroundColor: innerColors, borderWidth: 2, borderColor: '#fff', hoverOffset: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '38%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => items[0].dataset.customLabels[items[0].dataIndex],
+            label: ctx => ` Count: ${ctx.parsed} (${(ctx.parsed/total*100).toFixed(1)}%)`
+          }
+        }
+      }
+    }
+  });
+}
+
+makeDonut('donutAll',["Electrical", "Plumbing", "Technology", "Infrastructure", "Other"],[123, 81, 16, 10, 1],["#378ADD", "#1D9E75", "#BA7517", "#D85A30", "#9E9E9E"],["Elecext", "Bulb", "Boringstarter", "Wiring", "Switch", "Boring", "Watermotorpump", "Stabilizer", "Otherelectric", "Watersupplyexternal", "Toilettap", "Basintap", "Pipe", "Otherplumbing", "Socket", "Urinaltap", "Basepipe", "Facilitypipe", "Pcmbattery", "Pcmcharger", "Charger", "Tabrepair", "Pcmachine", "Wastewaterrepair", "Gate", "Tablechair", "Lock", "Wastewatercleaning", "Sarde.ka.karan.data."],[41, 20, 15, 12, 12, 10, 5, 4, 4, 27, 18, 6, 6, 6, 5, 5, 4, 4, 7, 4, 3, 1, 1, 3, 2, 2, 2, 1, 1],["#85B7EB", "#B5D4F4", "#E6F1FB", "#185FA5", "#0C447C", "#4D9BE0", "#6BAAE5", "#9DC5EF", "#2270C0", "#5DCAA5", "#9FE1CB", "#0F6E56", "#085041", "#3DBFA0", "#7DD4BB", "#A8E4D2", "#C8EFE6", "#1D9E75", "#EF9F27", "#FAC775", "#FAEEDA", "#854F0B", "#BA7517", "#F0997B", "#F5C4B3", "#993C1D", "#FAECE7", "#D85A30", "#BDBDBD"]);
+makeDonut('donutSd',["Electrical", "Plumbing", "Infrastructure"],[12, 26, 2],["#378ADD", "#1D9E75", "#D85A30"],["Boring", "Elecext", "Boringstarter", "Otherelectric", "Switch", "Watersupplyexternal", "Otherplumbing", "Socket", "Gate", "Wastewaterrepair"],[5, 3, 2, 1, 1, 24, 1, 1, 1, 1],["#85B7EB", "#B5D4F4", "#E6F1FB", "#185FA5", "#0C447C", "#5DCAA5", "#9FE1CB", "#0F6E56", "#F0997B", "#F5C4B3"]);
+</script>
+</body>
+</html>
