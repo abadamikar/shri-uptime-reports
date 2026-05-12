@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SHRI Facility Uptime Dashboard — Jan 1 – May 10, 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;color:#1e293b;line-height:1.6;font-size:14px}
+
+/* ── Header ── */
+.header{background:#fff;border-bottom:3px solid #0f5f73;padding:18px 40px}
+.header-inner{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.org-name{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#0f5f73;margin-bottom:2px}
+.header h1{font-size:1.3rem;font-weight:700;color:#0f172a}
+.header p{font-size:.78rem;color:#64748b;margin-top:1px}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.period-badge{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:6px 14px;font-size:.82rem;color:#475569}
+.period-badge .dot{width:8px;height:8px;border-radius:50%;background:#7a9e7e;flex-shrink:0}
+
+/* ── Assumption note ── */
+.assumption-note{font-size:.72rem;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;cursor:help;position:relative;display:inline-flex;align-items:center;gap:4px}
+.assumption-popup{display:none;position:absolute;top:calc(100%+6px);right:0;background:#0f172a;color:#e2e8f0;font-size:.73rem;line-height:1.7;padding:12px 16px;border-radius:8px;width:400px;z-index:999;text-align:left;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:normal;text-transform:none;letter-spacing:normal}
+.assumption-popup li{margin-left:16px;margin-top:3px}
+.assumption-note:hover .assumption-popup{display:block}
+
+/* ── Main layout ── */
+.main{max-width:1300px;margin:0 auto;padding:28px 40px}
+.section-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#7a9e7e;margin-bottom:8px}
+
+/* ── Cards ── */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+@media(max-width:800px){.cards{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#7a9e7e;border-radius:12px 12px 0 0}
+.card-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-bottom:6px}
+.card-value{font-size:2rem;font-weight:700;color:#0f172a;line-height:1.1}
+.card-sub{font-size:.75rem;color:#64748b;margin-top:5px;line-height:1.4}
+
+/* ── Sections ── */
+.section{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:24px 28px;margin-bottom:20px}
+.section.warn{border-color:#fcd34d;background:#fffbeb}
+.section-title{font-size:.95rem;font-weight:700;color:#0f172a;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.section-sub{font-size:.8rem;color:#64748b;margin-bottom:16px;line-height:1.6}
+.section-note{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:9px 14px;margin-bottom:14px;font-size:.79rem;color:#166534;line-height:1.6}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{text-align:left;padding:9px 12px;background:#f8fafc;color:#64748b;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafcff}
+td.num{text-align:right;font-variant-numeric:tabular-nums;vertical-align:middle}
+th.num-hd{text-align:right}
+
+/* ── Detail-col toggle ── */
+.detail-col{display:none}
+table.show-detail .detail-col{display:table-cell}
+.toggle-btn{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:.72rem;color:#475569;cursor:pointer;margin-left:8px;font-weight:500}
+.toggle-btn:hover{background:#e2e8f0}
+
+/* ── Badges & pills ── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.76rem;font-weight:700;white-space:nowrap}
+.budget-pill{display:inline-block;padding:2px 9px;border-radius:6px;font-size:.8rem;white-space:nowrap}
+
+/* ── Column tooltip — fixed to not inherit uppercase from th ── */
+.tip{position:relative;display:inline-flex;align-items:center;margin-left:3px;vertical-align:middle}
+.tip-btn{width:14px;height:14px;background:#cbd5e1;color:#475569;border-radius:50%;font-size:8px;font-weight:700;border:none;cursor:help;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:none;letter-spacing:normal}
+.tip-content{
+  visibility:hidden;opacity:0;
+  position:absolute;bottom:calc(100%+8px);left:50%;transform:translateX(-50%);
+  width:280px;
+  background:#0f172a;color:#e2e8f0;
+  font-size:.74rem;line-height:1.65;
+  padding:10px 13px;border-radius:8px;
+  z-index:9999;pointer-events:none;
+  transition:opacity .15s;
+  text-align:left;
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  /* Override th inheritance */
+  text-transform:none !important;
+  letter-spacing:normal !important;
+  font-weight:400 !important;
+  white-space:normal;
+  word-wrap:break-word;
+}
+.tip-content::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#0f172a}
+.tip:hover .tip-content{visibility:visible;opacity:1}
+.tip-content.wide{width:340px}
+
+/* ── Shutdown date entries ── */
+.sd-entry{display:flex;flex-wrap:wrap;gap:3px 8px;align-items:baseline;margin-bottom:5px;padding-bottom:5px;border-bottom:1px solid #f1f5f9;font-size:.8rem}
+.sd-entry:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.sd-date{font-weight:700;color:#0f172a;min-width:46px;flex-shrink:0}
+.sd-hrs{color:#475569;font-variant-numeric:tabular-nums;flex-shrink:0}
+.sd-why{color:#64748b;font-size:.75rem;display:flex;flex-wrap:wrap;gap:3px 6px}
+.issue-line{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.resolved-tag{display:inline-block;background:#dcfce7;color:#166534;border-radius:4px;padding:0 5px;font-size:.68rem;font-weight:600;white-space:nowrap}
+
+/* ── Charts ── */
+.chart-wrap{position:relative}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.chart-row{grid-template-columns:1fr}}
+.chart-title{font-size:.8rem;font-weight:600;color:#334155;margin-bottom:6px;text-align:center}
+.chart-sub{font-size:.72rem;color:#94a3b8;text-align:center;margin-bottom:10px}
+canvas{cursor:pointer}
+
+/* ── DQ ── */
+.dq-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 14px;margin-bottom:12px;font-size:.8rem;color:#92400e;line-height:1.6}
+.dq-block{margin-bottom:22px}
+.dq-block:last-child{margin-bottom:0}
+.dq-block-title{font-size:.82rem;font-weight:700;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+
+/* ── Legend ── */
+.legend{font-size:.73rem;color:#64748b;margin-top:10px;line-height:1.7}
+.legend code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:.72rem}
+
+/* ── Footer ── */
+.footer{text-align:center;padding:20px;font-size:.72rem;color:#94a3b8;border-top:1px solid #e2e8f0;background:#fff;margin-top:8px}
+
+/* ── Drilldown Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:28px 32px;max-width:600px;width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:2px solid #f1f5f9;padding-bottom:10px}
+.modal-header h3{font-size:1rem;font-weight:700;color:#0f172a}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:#f1f5f9}
+.modal-fac{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f1f5f9}
+.modal-fac:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.modal-fac-name{font-weight:700;font-size:.88rem;color:#0f172a;margin-bottom:5px}
+.modal-dates{font-size:.78rem;color:#475569;display:flex;flex-wrap:wrap;gap:4px}
+.modal-date-tag{background:#f1f5f9;border-radius:4px;padding:1px 7px;white-space:nowrap}
+.modal-count{display:inline-block;background:#e0f2fe;color:#0369a1;border-radius:10px;font-size:.7rem;font-weight:700;padding:0 6px;margin-left:5px}
+</style>
+</head>
+<body>
+
+<!-- Drilldown Modal -->
+<div class="modal-overlay" id="drillModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalTitle">Issue Drilldown</h3>
+      <button class="modal-close" onclick="closeDrill()">&#x2715;</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="org-name">SHRI — Sanitation and Health Rights in India</div>
+      <h1>Facility Uptime Dashboard</h1>
+      <p><strong>27 facilities</strong> &middot; Regular: 16h/day (2×8h shifts), 7d/wk &middot; School: 8h/day (2×4h shifts), 6d/wk &middot; Source: KoboToolbox / LookerStudio</p>
+    </div>
+    <div class="header-right">
+      <div class="period-badge"><span class="dot"></span>YTD: Jan 1 – May 10, 2026 &nbsp;&middot;&nbsp; Period: May 4 – May 10</div>
+      <div class="assumption-note">
+        &#9432; Denominator assumption — hover to read
+        <div class="assumption-popup">
+          <strong>Uptime denominator &amp; missing-hours assumptions:</strong>
+          <ul>
+            <li>Only days with at least one shift report submitted are counted.</li>
+            <li>When Shutdown = Yes but no hours recorded, the assumed loss is:
+              <br>&nbsp;&nbsp;— <strong>8h per shift</strong> for all regular facilities (full 8h shift loss)
+              <br>&nbsp;&nbsp;— <strong>4h per shift</strong> for school facilities only (PM SHRI School Basgoda, High School Dugdha)</li>
+            <li>Year-end projections use <strong>235 remaining days</strong> (May 11 – Dec 31, 2026).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- MONTHLY TREND -->
+  <div class="section" style="margin-bottom:20px">
+    <div class="section-title">&#128200; Monthly Portfolio Uptime — Jan 1 to May 10, 2026</div>
+    <div class="chart-wrap" style="height:220px"><canvas id="monthlyChart"></canvas></div>
+  </div>
+
+  <!-- SECTION 1: SUMMARY CARDS -->
+  <div class="section-label">Section 1 — Uptime Health Summary</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">YTD Portfolio Uptime <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Weighted average uptime across all 27 facilities from Jan 1 to May 10, 2026. Formula: (total days covered − total days lost) ÷ total days covered × 100%.</span></span></div>
+      <div class="card-value">99.2%</div>
+      <div class="card-sub">All 27 facilities &middot; Target: ≥97%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Facilities with Shutdowns <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Number of facilities that recorded at least one shutdown (Shutdown = Yes) during May 4–10, 2026.</span></span></div>
+      <div class="card-value">5</div>
+      <div class="card-sub">Out of 27 total &middot; May 4–10, 2026</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Days Lost — This Period <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Total shutdown days across all facilities during May 4–10. Calculated as hours lost ÷ hours per day (16h for regular facilities, 8h for school facilities). Summed across all affected facilities.</span></span></div>
+      <div class="card-value">3.6</div>
+      <div class="card-sub">Due to shutdowns across 5 facilities &middot; May 4–10</div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: FACILITY SHUTDOWN TABLE -->
+  <div class="section-label">Section 2 — Facility Shutdown Details (May 4 – May 10)</div>
+  <div class="section">
+    <div class="section-title">
+      &#128308; Facilities with Shutdowns — May 4 to May 10
+      <button class="toggle-btn" onclick="toggleDetail('s2table',this)">Show raw data</button>
+    </div>
+    <div class="section-sub">
+      Ordered by YTD uptime (worst first). A <span class="resolved-tag" style="font-size:.75rem">&#10003; date</span> next to an issue means that run of consecutive shutdown days ended on that date.
+      <strong>97% Recovery</strong> = consecutive shutdown-free days needed to bring YTD uptime back to 97%.
+      <strong>YTD Budget</strong> = remaining shutdown days before year-end uptime falls below 97% (235 days left in 2026).
+    </div>
+    <table id="s2table">
+      <thead>
+        <tr>
+          <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility name. Sorted by YTD uptime, worst first.</span></span></th>
+          <th>Shutdown Dates, Hours &amp; Issues <span class="tip"><button class="tip-btn">?</button><span class="tip-content wide">Each row shows one shutdown date with: shift hours lost (S1 = morning, S2 = evening) and the associated issue. A green ✓ date tag next to an issue means that consecutive run of the same issue ended on that date. * = no hours recorded, assumed 8h for regular facilities or 4h for school facilities.</span></span></th>
+          <th class="num-hd">YTD Uptime <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Year-to-date uptime % for this facility (Jan 1–May 10). Green ≥99%, yellow 97–99%, red &lt;97%.</span></span></th>
+          <th class="num-hd">97% Recovery <span class="tip"><button class="tip-btn">?</button><span class="tip-content wide">Consecutive shutdown-free days needed from today to bring this facility's uptime back to 97%. Formula: (0.97 × days covered − days functional) ÷ 0.03. Shows — if already at or above 97%.</span></span></th>
+          <th class="num-hd">YTD Budget <span class="tip"><button class="tip-btn">?</button><span class="tip-content wide">How many more shutdown days this facility can have before its year-end uptime falls below 97%. Red ≤5 days (critical), yellow 6–10 (watch), green &gt;10 (safe). Formula: 235 remaining days − Must-Operate days.</span></span></th>
+          <th class="num-hd detail-col">Days Covered <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Total days with at least one shift report submitted, year-to-date.</span></span></th>
+          <th class="num-hd detail-col">Hours Lost <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Total shutdown hours recorded for this facility, year-to-date (Jan 1–May 10).</span></span></th>
+          <th class="num-hd detail-col">Days Lost <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Hours lost ÷ hours per day (16h regular, 8h school), year-to-date.</span></span></th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td><strong>Patratu Rly Gate, Ramgarh</strong></td>
+      <td style="font-size:.8rem"><div class="sd-entry"><span class="sd-date">May 05</span><span class="sd-hrs">S2: 5h</span><span class="sd-why"><span class="issue-line">Plum: External water supply<span class="resolved-tag">&#10003; May 05</span></span></span></div><div class="sd-entry"><span class="sd-date">May 09</span><span class="sd-hrs">S1: 3h &nbsp;·&nbsp; S2: 8h</span><span class="sd-why"><span class="issue-line">Plum: External water supply</span></span></div><div class="sd-entry"><span class="sd-date">May 10</span><span class="sd-hrs">S1: 6h</span><span class="sd-why"><span class="issue-line">Plum: External water supply<span class="resolved-tag">&#10003; May 10</span></span></span></div></td>
+      <td class="num"><span class="badge" style="background:#fee2e2;color:#b91c1c">92.8%</span></td>
+      <td class="num"><span style="color:#b91c1c;font-weight:700">183.3 days</span></td>
+      <td class="num"><span class="budget-pill" style="background:#fee2e2;color:#b91c1c;font-weight:700">1.5 days</span></td>
+      <td class="num detail-col">130</td><td class="num detail-col">151h</td><td class="num detail-col">9.4</td>
+    </tr><tr>
+      <td><strong>Saram Bazar</strong></td>
+      <td style="font-size:.8rem"><div class="sd-entry"><span class="sd-date">May 10</span><span class="sd-hrs">S1: 8h* &nbsp;·&nbsp; S2: 8h*</span><span class="sd-why"><span class="issue-line">Plum: Basin tap<span class="resolved-tag">&#10003; May 10</span></span><span class="issue-line">Plum: Toilet tap<span class="resolved-tag">&#10003; May 10</span></span><span class="issue-line">Elec: External electricity<span class="resolved-tag">&#10003; May 10</span></span><span class="issue-line">Plum: External water supply<span class="resolved-tag">&#10003; May 10</span></span> <span class="issue-line">Elec: External electricity<span class="resolved-tag">&#10003; May 10</span></span></span></div></td>
+      <td class="num"><span class="badge" style="background:#fef3c7;color:#d97706">97.7%</span></td>
+      <td class="num"><span style="color:#166534">—</span></td>
+      <td class="num"><span class="budget-pill" style="background:#fef3c7;color:#d97706;font-weight:600">7.7 days</span></td>
+      <td class="num detail-col">94</td><td class="num detail-col">35h</td><td class="num detail-col">2.2</td>
+    </tr><tr>
+      <td><strong>Kasmar</strong></td>
+      <td style="font-size:.8rem"><div class="sd-entry"><span class="sd-date">May 05</span><span class="sd-hrs">S1: 4h &nbsp;·&nbsp; S2: 2h</span><span class="sd-why"><span class="issue-line">Elec: External electricity<span class="resolved-tag">&#10003; May 05</span></span></span></div><div class="sd-entry"><span class="sd-date">May 10</span><span class="sd-hrs">S1: 4h</span><span class="sd-why"><span class="issue-line">Elec: External electricity<span class="resolved-tag">&#10003; May 10</span></span></span></div></td>
+      <td class="num"><span class="badge" style="background:#fef3c7;color:#d97706">98.9%</span></td>
+      <td class="num"><span style="color:#166534">—</span></td>
+      <td class="num"><span class="budget-pill" style="background:#fef3c7;color:#d97706;font-weight:600">9.5 days</span></td>
+      <td class="num detail-col">130</td><td class="num detail-col">22h</td><td class="num detail-col">1.4</td>
+    </tr><tr>
+      <td><strong>North Basgoda</strong></td>
+      <td style="font-size:.8rem"><div class="sd-entry"><span class="sd-date">May 04</span><span class="sd-hrs">S1: 5h</span><span class="sd-why"><span class="issue-line">Plum: External water supply<span class="resolved-tag">&#10003; May 04</span></span></span></div></td>
+      <td class="num"><span class="badge" style="background:#f0fdf4;color:#166534">99.2%</span></td>
+      <td class="num"><span style="color:#166534">—</span></td>
+      <td class="num"><span class="budget-pill" style="background:#fef3c7;color:#d97706;font-weight:600">9.8 days</span></td>
+      <td class="num detail-col">130</td><td class="num detail-col">18h</td><td class="num detail-col">1.1</td>
+    </tr><tr>
+      <td><strong>Peterbaar</strong></td>
+      <td style="font-size:.8rem"><div class="sd-entry"><span class="sd-date">May 10</span><span class="sd-hrs">S2: 4h</span><span class="sd-why"><span class="issue-line">Elec: External electricity<span class="resolved-tag">&#10003; May 10</span></span></span></div></td>
+      <td class="num"><span class="badge" style="background:#f0fdf4;color:#166534">99.8%</span></td>
+      <td class="num"><span style="color:#166534">—</span></td>
+      <td class="num"><span class="budget-pill" style="background:#f0fdf4;color:#166534;">10.8 days</span></td>
+      <td class="num detail-col">130</td><td class="num detail-col">4h</td><td class="num detail-col">0.2</td>
+    </tr></tbody>
+    </table>
+    <div class="legend" style="margin-top:12px">
+      <code>*</code> No hours recorded — assumed <strong>8h</strong> (regular) or <strong>4h</strong> (school) full-shift loss &nbsp;·&nbsp;
+      Budget: <strong style="color:#b91c1c">red ≤5 days</strong> (critical) &nbsp;·&nbsp; <strong style="color:#d97706">yellow 6–10</strong> (watch) &nbsp;·&nbsp; <strong style="color:#166534">green &gt;10</strong> (safe)
+    </div>
+  </div>
+
+  <!-- SECTION 3: ISSUE ANALYSIS -->
+  <div class="section-label">Section 3 — Issue Analysis &amp; Facilities Under Observation</div>
+  <div class="section">
+    <div class="section-title">Issue Breakdown — YTD (Jan 1 – May 10)</div>
+    <div class="section-note">
+      &#128161; <strong>How to read these charts:</strong> The outer ring shows issue categories (Electrical, Plumbing, etc.) and the inner ring shows specific issue types within each category.
+      Hover any segment to see counts. <strong>Click any segment — inner or outer — to see which facilities were affected and on which dates.</strong>
+    </div>
+    <div class="chart-row">
+      <div>
+        <div class="chart-title">All Reported Issues (348)</div>
+        <div class="chart-sub">Any issue logged — whether or not it caused a shutdown</div>
+        <div class="chart-wrap" style="height:300px"><canvas id="donutAll"></canvas></div>
+      </div>
+      <div>
+        <div class="chart-title">Shutdown-Causing Issues (75)</div>
+        <div class="chart-sub">Issues where Shutdown = Yes</div>
+        <div class="chart-wrap" style="height:300px"><canvas id="donutSd"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Recurring shutdowns (consolidated with budget) -->
+  <div class="section">
+    <div class="section-title">Facilities Under Observation</div>
+    <div class="dq-block">
+      <div class="dq-block-title">&#128260; Recurring Shutdowns — Facilities with ≥5 shutdown days in April–May, or critical budget (≤5 days remaining)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility name. Included if it had 5+ shutdown days in April–May 2026, or has 5 or fewer shutdown days of budget remaining to year-end.</span></span></th>
+            <th>Shutdown Days per Month <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Breakdown of unique shutdown days by calendar month, year-to-date. Format: Month: N days. Helps identify whether shutdowns are worsening or recovering over time.</span></span></th>
+            <th class="num-hd">Total Shutdown Days <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Total unique calendar days with at least one shutdown recorded for this facility, year-to-date (Jan 1–May 10).</span></span></th>
+            <th>Most Common Cause <span class="tip"><button class="tip-btn">?</button><span class="tip-content">The issue category and type appearing most frequently in this facility's shutdown records, year-to-date. Indicates the primary driver of repeated outages.</span></span></th>
+            <th class="num-hd">YTD Uptime <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Year-to-date uptime percentage for this facility (Jan 1–May 10).</span></span></th>
+            <th class="num-hd">YTD Budget <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Remaining shutdown days before year-end uptime falls below 97%. Red ≤5 (critical), yellow 6–10 (watch), green &gt;10 (safe).</span></span></th>
+            <th class="num-hd">97% Recovery <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Consecutive shutdown-free days needed from today to bring year-end uptime back to 97%. Formula: (0.97 × days covered − days functional) ÷ 0.03. Shows — if already at or above 97%.</span></span></th>
+          </tr>
+        </thead>
+        <tbody><tr>
+      <td><strong>Patratu Rly Gate, Ramgarh</strong></td>
+      <td style="font-size:.78rem;color:#475569">Feb: 3d &nbsp;·&nbsp; Mar: 9d &nbsp;·&nbsp; Apr: 1d &nbsp;·&nbsp; May: 3d</td>
+      <td class="num">16</td>
+      <td style="font-size:.8rem">Plumbing: External water supply</td>
+      <td class="num">92.8%</td>
+      <td class="num"><span class="budget-pill" style="background:#fee2e2;color:#b91c1c;font-weight:700">1.5 days</span></td>
+      <td class="num"><span style="color:#b91c1c;font-weight:700">183.3 days</span></td>
+    </tr><tr>
+      <td><strong>Urwan, Koderma</strong></td>
+      <td style="font-size:.78rem;color:#475569">Feb: 2d &nbsp;·&nbsp; Mar: 2d &nbsp;·&nbsp; Apr: 5d &nbsp;·&nbsp; May: 1d</td>
+      <td class="num">10</td>
+      <td style="font-size:.8rem">Infrastructure: Wastewater (external)</td>
+      <td class="num">94.6%</td>
+      <td class="num"><span class="budget-pill" style="background:#fee2e2;color:#b91c1c;font-weight:700">4.6 days</span></td>
+      <td class="num"><span style="color:#b91c1c;font-weight:700">82.7 days</span></td>
+    </tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 4: DATA QUALITY -->
+  <div class="section-label">Section 4 — Data Quality (May 4 – May 10)</div>
+  <div class="section warn">
+    <div class="section-title">&#9888; Data Quality Flags — May 4 to May 10</div>
+    <div class="section-sub">Five categories of data quality checks for the current reporting period. These do not affect uptime calculations but should be reviewed with field teams.</div>
+
+    <!-- DQ 1: Missing shifts -->
+    <div class="dq-block">
+      <div class="dq-block-title">&#9312; Missing Shifts — Days where fewer than 2 shift reports were submitted</div>
+      <table>
+        <thead><tr>
+          <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility where one or both daily shifts were not reported.</span></span></th>
+          <th>Date <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Calendar date on which the missing shift(s) were detected.</span></span></th>
+          <th>Submitted <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Which shift numbers were actually submitted. S1 = morning shift, S2 = evening shift. Each facility is expected to file both every day.</span></span></th>
+          <th>Missing <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Which shift(s) were not filed on this date.</span></span></th>
+        </tr></thead>
+        <tbody><tr><td><strong>Gomia</strong></td><td>May 10</td><td>S1</td><td>S2</td></tr><tr><td><strong>Jaridih SBM</strong></td><td>May 09</td><td>S1</td><td>S2</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- DQ 2: Duplicate timestamps -->
+    <div class="dq-block">
+      <div class="dq-block-title">&#9313; Suspicious Duplicate Timestamps — Same timestamp with no issue, or both shifts at identical time</div>
+      <div class="dq-note">
+        <strong>Note:</strong> Multiple rows sharing the same timestamp are <em>normal</em> when a facility reports more than one issue in a single form submission — these are not flagged. Only flagged here: (1) identical timestamps with <em>no issue recorded</em> (e.g., Nemua — likely an accidental duplicate), or (2) Shift 1 and Shift 2 submitted at the exact same timestamp (expected: Shift 1 in the afternoon, Shift 2 in the evening). 1 case(s) found.
+      </div>
+      <table>
+        <thead><tr>
+          <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility where a suspicious duplicate timestamp was detected.</span></span></th>
+          <th>Date <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Calendar date of the duplicate submissions.</span></span></th>
+          <th>Time <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Exact submission timestamp shared by the duplicate entries.</span></span></th>
+          <th class="num-hd">Rows <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Number of rows in the dataset sharing this exact timestamp for this facility on this date.</span></span></th>
+          <th class="num-hd">Shifts <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Which shift numbers (S1 / S2) are present in the duplicate rows.</span></span></th>
+          <th>Note <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Description of why this entry was flagged as a potential data quality issue.</span></span></th>
+        </tr></thead>
+        <tbody><tr><td><strong>Nemua</strong></td><td>May 06</td><td>19:56</td><td class="num">2</td><td class="num">S1 &amp; S2</td><td style="font-size:.79rem">No issue recorded — both entries appear identical. Possible duplicate or system error.</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- DQ 3: Over-hours -->
+    <div class="dq-block">
+      <div class="dq-block-title">&#9314; Hours Exceeding Shift Maximum — Logged hours above the expected per-shift ceiling</div>
+      <table>
+        <thead><tr>
+          <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility where an over-hours entry was detected.</span></span></th>
+          <th>Date <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Calendar date of the suspicious entry.</span></span></th>
+          <th>Shift <span class="tip"><button class="tip-btn">?</button><span class="tip-content">S1 = morning shift, S2 = evening shift.</span></span></th>
+          <th class="num-hd">Hours Logged <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Hours recorded for this shift. Maximum expected: 8h per shift for regular facilities, 4h per shift for school facilities (PM SHRI School Basgoda, High School Dugdha).</span></span></th>
+          <th>Issue <span class="tip"><button class="tip-btn">?</button><span class="tip-content">The issue category and type recorded alongside the over-hours entry.</span></span></th>
+        </tr></thead>
+        <tbody><tr><td colspan="5" style="color:#64748b;font-style:italic;text-align:center">No over-hours records in this period</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- DQ 4: Minor issues recorded as full shutdowns -->
+    <div class="dq-block">
+      <div class="dq-block-title">&#9315; Potential False Shutdowns — Minor issues unlikely to cause a full facility closure</div>
+      <div class="dq-note">These facilities recorded Shutdown = Yes for issues that typically affect a single fixture or stall (e.g., a tap, a bulb, or a socket) rather than the whole facility. Please verify with field staff whether a full shutdown was genuinely required.</div>
+      <table>
+        <thead><tr>
+          <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility that recorded a minor issue as a full shutdown.</span></span></th>
+          <th>Date <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Date on which the minor issue was recorded as a shutdown.</span></span></th>
+          <th>Issue <span class="tip"><button class="tip-btn">?</button><span class="tip-content">The specific issue type flagged. These are fixture-level issues that normally affect one stall or fitting, not the whole facility.</span></span></th>
+          <th>Note <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Explanation of why this entry was flagged for review.</span></span></th>
+        </tr></thead>
+        <tbody><tr><td><strong>Saram Bazar</strong></td><td>May 10</td><td>Plumbing: Basin tap</td><td style="font-size:.79rem">A faulty basin tap is unlikely to cause a complete facility shutdown.</td></tr><tr><td><strong>Saram Bazar</strong></td><td>May 10</td><td>Plumbing: Toilet tap</td><td style="font-size:.79rem">A toilet tap issue typically affects one stall, not the full facility.</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- DQ 5: Gate issue shutdowns -->
+    <div class="dq-block">
+      <div class="dq-block-title">&#9316; Gate Issues Recorded as Shutdown — Requires clarification: facility gate or stall door?</div>
+      <div class="dq-note">A "Gate" issue should specify whether it refers to the facility's main gate (which may justify a shutdown) or an individual stall door (which should not cause a full facility shutdown unless it is the only stall). Please confirm the type of gate with field staff.</div>
+      <table>
+        <thead><tr>
+          <th>Facility <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Facility that recorded a Gate issue as a full shutdown.</span></span></th>
+          <th>Date <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Date on which the gate issue was recorded as a shutdown.</span></span></th>
+          <th>Note <span class="tip"><button class="tip-btn">?</button><span class="tip-content">Action required: confirm whether this is the facility gate or a stall door.</span></span></th>
+        </tr></thead>
+        <tbody><tr><td colspan="3" style="color:#64748b;font-style:italic;text-align:center">No gate-issue shutdowns flagged in this period</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    SHRI Facility Uptime Dashboard &middot; YTD: Jan 1 – May 10, 2026 &middot; Period: May 4 – May 10 &middot; Generated May 11, 2026
+  </div>
+</div>
+
+<script>
+// ── Drilldown data ────────────────────────────────────────────────────────────
+const DRILLDOWN = {"sd": {"by_cat": {"Infrastructure": [{"facility": "Urwan, Koderma", "dates": ["2026-04-12", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17"], "count": 5}, {"facility": "Azad Nagar", "dates": ["2026-02-19"], "count": 1}, {"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-04"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-04-22"], "count": 1}], "Electrical": [{"facility": "Jaridih CSR", "dates": ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04"], "count": 4}, {"facility": "Urwan, Koderma", "dates": ["2026-02-20", "2026-03-18", "2026-03-19", "2026-05-01"], "count": 4}, {"facility": "Kasmar", "dates": ["2026-05-03", "2026-05-05", "2026-05-10"], "count": 3}, {"facility": "Basgoda", "dates": ["2026-01-04", "2026-01-06"], "count": 2}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-03-25"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-04-13"], "count": 1}, {"facility": "Peterbaar", "dates": ["2026-05-10"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-05-10"], "count": 1}], "Plumbing": [{"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-02-23", "2026-02-24", "2026-02-25", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-26", "2026-03-27", "2026-04-06", "2026-05-05", "2026-05-09", "2026-05-10"], "count": 16}, {"facility": "North Basgoda", "dates": ["2026-02-24", "2026-05-04"], "count": 2}, {"facility": "Saram Bazar", "dates": ["2026-04-05", "2026-05-10"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Bela Museri", "dates": ["2026-04-28"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-02-23"], "count": 1}]}, "by_issue": {"Infrastructure": {"Gate": [{"facility": "Azad Nagar", "dates": ["2026-02-19"], "count": 1}, {"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}], "Wastewater repair": [{"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-04"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-04-22"], "count": 1}, {"facility": "Urwan, Koderma", "dates": ["2026-04-12"], "count": 1}], "Wastewater (external)": [{"facility": "Urwan, Koderma", "dates": ["2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17"], "count": 4}], "Wastewater cleaning": [{"facility": "Urwan, Koderma", "dates": ["2026-04-12"], "count": 1}]}, "Electrical": {"Boring starter": [{"facility": "Basgoda", "dates": ["2026-01-04", "2026-01-06"], "count": 2}], "Boring pump": [{"facility": "Jaridih CSR", "dates": ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04"], "count": 4}], "External electricity": [{"facility": "Kasmar", "dates": ["2026-05-03", "2026-05-05", "2026-05-10"], "count": 3}, {"facility": "Urwan, Koderma", "dates": ["2026-03-18", "2026-03-19", "2026-05-01"], "count": 3}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-03-25"], "count": 1}, {"facility": "Peterbaar", "dates": ["2026-05-10"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-05-10"], "count": 1}], "Stabilizer": [{"facility": "North Basgoda", "dates": ["2026-04-13"], "count": 1}], "Wiring": [{"facility": "Urwan, Koderma", "dates": ["2026-05-01"], "count": 1}], "Other electrical": [{"facility": "Urwan, Koderma", "dates": ["2026-03-18"], "count": 1}], "Switch": [{"facility": "Urwan, Koderma", "dates": ["2026-02-20"], "count": 1}]}, "Plumbing": {"External water supply": [{"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-02-23", "2026-02-24", "2026-02-25", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-26", "2026-03-27", "2026-04-06", "2026-05-05", "2026-05-09", "2026-05-10"], "count": 16}, {"facility": "Saram Bazar", "dates": ["2026-04-05", "2026-05-10"], "count": 2}, {"facility": "Bela Museri", "dates": ["2026-04-28"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-02-23"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-05-04"], "count": 1}, {"facility": "Urwan, Koderma", "dates": ["2026-04-12"], "count": 1}], "Other plumbing": [{"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}], "Toilet tap": [{"facility": "Saram Bazar", "dates": ["2026-05-10"], "count": 1}], "Basin tap": [{"facility": "Saram Bazar", "dates": ["2026-05-10"], "count": 1}], "Socket": [{"facility": "Urwan, Koderma", "dates": ["2026-02-14"], "count": 1}]}}}, "all": {"by_cat": {"Electrical": [{"facility": "Bairo", "dates": ["2026-01-06", "2026-01-22", "2026-03-06", "2026-03-12", "2026-03-18", "2026-04-08", "2026-05-01"], "count": 7}, {"facility": "Basgoda", "dates": ["2026-01-04", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-16", "2026-02-05", "2026-02-28"], "count": 7}, {"facility": "Jaridih CSR", "dates": ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-02-01", "2026-05-05"], "count": 6}, {"facility": "Urwan, Koderma", "dates": ["2026-02-20", "2026-02-26", "2026-03-05", "2026-03-18", "2026-03-19", "2026-05-01"], "count": 6}, {"facility": "Azad Nagar", "dates": ["2026-01-02", "2026-02-14", "2026-03-23", "2026-04-03"], "count": 4}, {"facility": "Gomia", "dates": ["2026-05-04", "2026-05-05", "2026-05-09", "2026-05-10"], "count": 4}, {"facility": "Nemua", "dates": ["2026-01-22", "2026-04-16", "2026-04-25", "2026-05-02"], "count": 4}, {"facility": "Dugdha Market", "dates": ["2026-02-08", "2026-02-12", "2026-04-02"], "count": 3}, {"facility": "Kasmar", "dates": ["2026-05-03", "2026-05-05", "2026-05-10"], "count": 3}, {"facility": "North Basgoda", "dates": ["2026-02-15", "2026-03-15", "2026-04-13"], "count": 3}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-03", "2026-01-07", "2026-03-25"], "count": 3}, {"facility": "Peterbaar", "dates": ["2026-02-25", "2026-03-07", "2026-05-10"], "count": 3}, {"facility": "Dundibagh", "dates": ["2026-02-19", "2026-05-04"], "count": 2}, {"facility": "Jaridih SBM", "dates": ["2026-04-19", "2026-05-05"], "count": 2}, {"facility": "Karanpur", "dates": ["2026-01-22", "2026-04-05"], "count": 2}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-03-25", "2026-04-03"], "count": 2}, {"facility": "Saram Bazar", "dates": ["2026-05-05", "2026-05-10"], "count": 2}, {"facility": "Vurahi", "dates": ["2026-03-25", "2026-05-10"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-03-07"], "count": 1}, {"facility": "PM SHRI School Basgoda", "dates": ["2026-03-25"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-05-08"], "count": 1}], "Technology": [{"facility": "Azad Nagar", "dates": ["2026-02-26", "2026-02-28"], "count": 2}, {"facility": "Dundibagh", "dates": ["2026-02-19", "2026-02-27"], "count": 2}, {"facility": "Gomia", "dates": ["2026-04-05", "2026-05-09"], "count": 2}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-01-20", "2026-04-03"], "count": 2}, {"facility": "Mahuatand", "dates": ["2026-02-27", "2026-05-05"], "count": 2}, {"facility": "Nemua", "dates": ["2026-04-03", "2026-04-29"], "count": 2}, {"facility": "North Basgoda", "dates": ["2026-01-16", "2026-02-07"], "count": 2}, {"facility": "Bairo", "dates": ["2026-03-27"], "count": 1}, {"facility": "Jaridih SBM", "dates": ["2026-05-05"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-02-05"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-03-22"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-01-06"], "count": 1}], "Infrastructure": [{"facility": "Urwan, Koderma", "dates": ["2026-04-12", "2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17"], "count": 5}, {"facility": "Peterbaar", "dates": ["2026-03-23", "2026-03-29", "2026-04-03"], "count": 3}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-03-28", "2026-04-04"], "count": 2}, {"facility": "Azad Nagar", "dates": ["2026-02-19"], "count": 1}, {"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}, {"facility": "Gomia", "dates": ["2026-02-05"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-03-27"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-18"], "count": 1}, {"facility": "PM SHRI School Basgoda", "dates": ["2026-03-14"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-04-29"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-04-22"], "count": 1}], "Plumbing": [{"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-01-09", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-26", "2026-03-27", "2026-04-06", "2026-04-19", "2026-05-05", "2026-05-09", "2026-05-10"], "count": 19}, {"facility": "Vurahi", "dates": ["2026-01-19", "2026-02-08", "2026-02-25", "2026-04-09", "2026-04-17", "2026-05-01"], "count": 6}, {"facility": "Gomia", "dates": ["2026-01-20", "2026-01-31", "2026-02-03", "2026-03-11", "2026-05-05"], "count": 5}, {"facility": "Karanpur", "dates": ["2026-02-25", "2026-05-04", "2026-05-09", "2026-05-10"], "count": 4}, {"facility": "Bairo", "dates": ["2026-01-28", "2026-03-06", "2026-03-27"], "count": 3}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12", "2026-04-13"], "count": 3}, {"facility": "Bela Museri", "dates": ["2026-02-11", "2026-04-28"], "count": 2}, {"facility": "Mahuatand", "dates": ["2026-02-25", "2026-04-01"], "count": 2}, {"facility": "Nemua", "dates": ["2026-02-19", "2026-02-25"], "count": 2}, {"facility": "North Basgoda", "dates": ["2026-02-24", "2026-05-04"], "count": 2}, {"facility": "Peterbaar", "dates": ["2026-01-21", "2026-04-03"], "count": 2}, {"facility": "Saram Bazar", "dates": ["2026-04-05", "2026-05-10"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "Dundibagh", "dates": ["2026-01-09"], "count": 1}, {"facility": "Gomia Block", "dates": ["2026-05-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Jaridih CSR", "dates": ["2026-02-01"], "count": 1}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-15"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-02-23"], "count": 1}], "Other": [{"facility": "Jaridih CSR", "dates": ["2026-02-05"], "count": 1}]}, "by_issue": {"Electrical": {"Boring starter": [{"facility": "Basgoda", "dates": ["2026-01-04", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-16", "2026-02-05", "2026-02-28"], "count": 7}, {"facility": "Urwan, Koderma", "dates": ["2026-02-26", "2026-03-05", "2026-03-18", "2026-05-01"], "count": 4}, {"facility": "Peterbaar", "dates": ["2026-02-25", "2026-03-07"], "count": 2}, {"facility": "Azad Nagar", "dates": ["2026-04-03"], "count": 1}, {"facility": "Jaridih SBM", "dates": ["2026-04-19"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-03-15"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07"], "count": 1}], "Switch": [{"facility": "Urwan, Koderma", "dates": ["2026-02-20", "2026-02-26", "2026-03-05", "2026-03-18", "2026-05-01"], "count": 5}, {"facility": "Bairo", "dates": ["2026-03-18", "2026-05-01"], "count": 2}, {"facility": "Nemua", "dates": ["2026-04-16", "2026-04-25"], "count": 2}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07", "2026-03-25"], "count": 2}, {"facility": "Azad Nagar", "dates": ["2026-04-03"], "count": 1}, {"facility": "Dugdha Chhatghat", "dates": ["2026-03-07"], "count": 1}, {"facility": "Dugdha Market", "dates": ["2026-02-08"], "count": 1}, {"facility": "Dundibagh", "dates": ["2026-02-19"], "count": 1}, {"facility": "Jaridih CSR", "dates": ["2026-05-05"], "count": 1}, {"facility": "Jaridih SBM", "dates": ["2026-04-19"], "count": 1}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-03"], "count": 1}, {"facility": "Vurahi", "dates": ["2026-05-10"], "count": 1}], "External electricity": [{"facility": "Bairo", "dates": ["2026-01-06", "2026-01-22", "2026-03-06", "2026-03-12", "2026-03-18", "2026-04-08", "2026-05-01"], "count": 7}, {"facility": "Basgoda", "dates": ["2026-01-04", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-16", "2026-02-05", "2026-02-28"], "count": 7}, {"facility": "Urwan, Koderma", "dates": ["2026-02-20", "2026-02-26", "2026-03-05", "2026-03-18", "2026-03-19", "2026-05-01"], "count": 6}, {"facility": "Azad Nagar", "dates": ["2026-01-02", "2026-02-14", "2026-03-23", "2026-04-03"], "count": 4}, {"facility": "Gomia", "dates": ["2026-05-04", "2026-05-05", "2026-05-09", "2026-05-10"], "count": 4}, {"facility": "Nemua", "dates": ["2026-01-22", "2026-04-16", "2026-04-25", "2026-05-02"], "count": 4}, {"facility": "Dugdha Market", "dates": ["2026-02-08", "2026-02-12", "2026-04-02"], "count": 3}, {"facility": "Kasmar", "dates": ["2026-05-03", "2026-05-05", "2026-05-10"], "count": 3}, {"facility": "North Basgoda", "dates": ["2026-02-15", "2026-03-15", "2026-04-13"], "count": 3}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-03", "2026-01-07", "2026-03-25"], "count": 3}, {"facility": "Peterbaar", "dates": ["2026-02-25", "2026-03-07", "2026-05-10"], "count": 3}, {"facility": "Dundibagh", "dates": ["2026-02-19", "2026-05-04"], "count": 2}, {"facility": "Jaridih SBM", "dates": ["2026-04-19", "2026-05-05"], "count": 2}, {"facility": "Karanpur", "dates": ["2026-01-22", "2026-04-05"], "count": 2}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-03-25", "2026-04-03"], "count": 2}, {"facility": "Saram Bazar", "dates": ["2026-05-05", "2026-05-10"], "count": 2}, {"facility": "Vurahi", "dates": ["2026-03-25", "2026-05-10"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-03-07"], "count": 1}, {"facility": "PM SHRI School Basgoda", "dates": ["2026-03-25"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-05-08"], "count": 1}], "Wiring": [{"facility": "Urwan, Koderma", "dates": ["2026-02-20", "2026-02-26", "2026-03-05", "2026-03-18", "2026-03-19", "2026-05-01"], "count": 6}, {"facility": "Dundibagh", "dates": ["2026-02-19", "2026-05-04"], "count": 2}, {"facility": "Jaridih SBM", "dates": ["2026-04-19", "2026-05-05"], "count": 2}, {"facility": "Azad Nagar", "dates": ["2026-04-03"], "count": 1}, {"facility": "Bairo", "dates": ["2026-03-12"], "count": 1}, {"facility": "Dugdha Market", "dates": ["2026-04-02"], "count": 1}, {"facility": "Gomia", "dates": ["2026-05-05"], "count": 1}, {"facility": "Jaridih CSR", "dates": ["2026-05-05"], "count": 1}, {"facility": "Karanpur", "dates": ["2026-04-05"], "count": 1}, {"facility": "PM SHRI School Basgoda", "dates": ["2026-03-25"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-05-05"], "count": 1}], "Bulb": [{"facility": "Urwan, Koderma", "dates": ["2026-02-26", "2026-03-05", "2026-03-18", "2026-03-19", "2026-05-01"], "count": 5}, {"facility": "Bairo", "dates": ["2026-01-06", "2026-01-22", "2026-03-06", "2026-04-08"], "count": 4}, {"facility": "Azad Nagar", "dates": ["2026-02-14", "2026-03-23"], "count": 2}, {"facility": "Dugdha Market", "dates": ["2026-02-12", "2026-04-02"], "count": 2}, {"facility": "Nemua", "dates": ["2026-01-22", "2026-05-02"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-03-07"], "count": 1}, {"facility": "Dundibagh", "dates": ["2026-02-19"], "count": 1}, {"facility": "Gomia", "dates": ["2026-05-05"], "count": 1}, {"facility": "Jaridih CSR", "dates": ["2026-02-01"], "count": 1}, {"facility": "Jaridih SBM", "dates": ["2026-04-19"], "count": 1}, {"facility": "Karanpur", "dates": ["2026-01-22"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-15"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07"], "count": 1}, {"facility": "Vurahi", "dates": ["2026-03-25"], "count": 1}], "Water motor pump": [{"facility": "Urwan, Koderma", "dates": ["2026-02-26", "2026-03-05", "2026-03-18", "2026-05-01"], "count": 4}, {"facility": "Azad Nagar", "dates": ["2026-01-02"], "count": 1}, {"facility": "Jaridih SBM", "dates": ["2026-04-19"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07"], "count": 1}], "Boring pump": [{"facility": "Jaridih CSR", "dates": ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04"], "count": 4}, {"facility": "Urwan, Koderma", "dates": ["2026-02-26", "2026-03-05", "2026-03-18", "2026-05-01"], "count": 4}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-03", "2026-01-07"], "count": 2}, {"facility": "Jaridih SBM", "dates": ["2026-04-19"], "count": 1}], "Stabilizer": [{"facility": "Urwan, Koderma", "dates": ["2026-02-26", "2026-03-05", "2026-03-18", "2026-05-01"], "count": 4}, {"facility": "Jaridih SBM", "dates": ["2026-04-19"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-04-13"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07"], "count": 1}], "Other electrical": [{"facility": "Urwan, Koderma", "dates": ["2026-02-26", "2026-03-05", "2026-03-18", "2026-05-01"], "count": 4}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-01-07"], "count": 1}]}, "Technology": {"PC battery": [{"facility": "Azad Nagar", "dates": ["2026-02-26", "2026-02-28"], "count": 2}, {"facility": "Bairo", "dates": ["2026-03-27"], "count": 1}, {"facility": "Gomia", "dates": ["2026-04-05"], "count": 1}, {"facility": "Nemua", "dates": ["2026-04-03"], "count": 1}, {"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-03-22"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-01-06"], "count": 1}], "Charger": [{"facility": "Dundibagh", "dates": ["2026-02-19", "2026-02-27"], "count": 2}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-03"], "count": 1}], "Other tech": [{"facility": "Gomia", "dates": ["2026-05-09"], "count": 1}], "Internet": [{"facility": "Gomia", "dates": ["2026-05-09"], "count": 1}], "PC charger": [{"facility": "North Basgoda", "dates": ["2026-01-16", "2026-02-07"], "count": 2}, {"facility": "Jaridih SBM", "dates": ["2026-05-05"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-02-05"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-01-06"], "count": 1}], "Tablet repair": [{"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-01-20"], "count": 1}, {"facility": "Nemua", "dates": ["2026-04-29"], "count": 1}], "PC machine": [{"facility": "Mahuatand", "dates": ["2026-02-27", "2026-05-05"], "count": 2}]}, "Infrastructure": {"Gate": [{"facility": "Azad Nagar", "dates": ["2026-02-19"], "count": 1}, {"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-18"], "count": 1}], "Wastewater (external)": [{"facility": "Urwan, Koderma", "dates": ["2026-04-14", "2026-04-15", "2026-04-16", "2026-04-17"], "count": 4}, {"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}], "Wall": [{"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}], "Floor": [{"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}], "Painting": [{"facility": "Dugdha Market", "dates": ["2026-04-27"], "count": 1}], "Table / chair": [{"facility": "Gomia", "dates": ["2026-02-05"], "count": 1}, {"facility": "Peterbaar", "dates": ["2026-03-29"], "count": 1}], "Wastewater repair": [{"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-03-28", "2026-04-04"], "count": 2}, {"facility": "PM SHRI School Basgoda", "dates": ["2026-03-14"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-04-22"], "count": 1}, {"facility": "Urwan, Koderma", "dates": ["2026-04-12"], "count": 1}], "Lock": [{"facility": "Katiya Market, Ramgarh", "dates": ["2026-03-27"], "count": 1}, {"facility": "Peterbaar", "dates": ["2026-04-03"], "count": 1}], "Roof": [{"facility": "Patratu Block Campus, Ramgarh", "dates": ["2026-04-29"], "count": 1}], "Wastewater cleaning": [{"facility": "Peterbaar", "dates": ["2026-03-23"], "count": 1}, {"facility": "Urwan, Koderma", "dates": ["2026-04-12"], "count": 1}], "Other infra": [{"facility": "Urwan, Koderma", "dates": ["2026-04-12"], "count": 1}]}, "Plumbing": {"Toilet tap": [{"facility": "Bairo", "dates": ["2026-01-28", "2026-03-06", "2026-03-27"], "count": 3}, {"facility": "Gomia", "dates": ["2026-01-20", "2026-01-31", "2026-03-11"], "count": 3}, {"facility": "Vurahi", "dates": ["2026-02-08", "2026-04-09", "2026-04-17"], "count": 3}, {"facility": "Peterbaar", "dates": ["2026-01-21", "2026-04-03"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Bela Museri", "dates": ["2026-02-11"], "count": 1}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Jaridih CSR", "dates": ["2026-02-01"], "count": 1}, {"facility": "Mahuatand", "dates": ["2026-02-25"], "count": 1}, {"facility": "Nemua", "dates": ["2026-02-19"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-03-06"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-05-10"], "count": 1}], "External water supply": [{"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-02-23", "2026-02-24", "2026-02-25", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-26", "2026-03-27", "2026-04-06", "2026-05-05", "2026-05-09", "2026-05-10"], "count": 16}, {"facility": "North Basgoda", "dates": ["2026-02-24", "2026-05-04"], "count": 2}, {"facility": "Saram Bazar", "dates": ["2026-04-05", "2026-05-10"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Bela Museri", "dates": ["2026-04-28"], "count": 1}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Katiya Market, Ramgarh", "dates": ["2026-02-23"], "count": 1}], "Basin tap": [{"facility": "Karanpur", "dates": ["2026-05-09", "2026-05-10"], "count": 2}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-01-09", "2026-03-06"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Bela Museri", "dates": ["2026-02-11"], "count": 1}, {"facility": "Gomia", "dates": ["2026-05-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}, {"facility": "Saram Bazar", "dates": ["2026-05-10"], "count": 1}, {"facility": "Vurahi", "dates": ["2026-01-19"], "count": 1}], "Other plumbing": [{"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12", "2026-04-13"], "count": 3}, {"facility": "Vurahi", "dates": ["2026-02-25", "2026-05-01"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Karanpur", "dates": ["2026-02-25"], "count": 1}, {"facility": "Nemua", "dates": ["2026-02-25"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}], "Socket": [{"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "Dundibagh", "dates": ["2026-01-09"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Karanpur", "dates": ["2026-05-04"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-03-06"], "count": 1}], "Base pipe": [{"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-03-06", "2026-04-19"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "Gomia", "dates": ["2026-05-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-15"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}], "Urinal tap": [{"facility": "Gomia", "dates": ["2026-02-03", "2026-05-05"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-03-06"], "count": 1}], "Facility pipe": [{"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Katiya Bus Stand, Ramgarh", "dates": ["2026-04-15"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}, {"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-03-06"], "count": 1}], "Pipe": [{"facility": "Patratu Rly Gate, Ramgarh", "dates": ["2026-02-28", "2026-03-06"], "count": 2}, {"facility": "Urwan, Koderma", "dates": ["2026-02-14", "2026-04-12"], "count": 2}, {"facility": "Dugdha Chhatghat", "dates": ["2026-04-05"], "count": 1}, {"facility": "Gomia Block", "dates": ["2026-05-05"], "count": 1}, {"facility": "High School Dugdha", "dates": ["2026-04-11"], "count": 1}, {"facility": "Mahuatand", "dates": ["2026-04-01"], "count": 1}, {"facility": "North Basgoda", "dates": ["2026-02-24"], "count": 1}]}, "Other": {"Sarde.ka.karan.data.": [{"facility": "Jaridih CSR", "dates": ["2026-02-05"], "count": 1}]}}}};
+
+function openDrill(type, key, subkey) {
+  let items, title;
+  if (subkey === null) {
+    items = (DRILLDOWN[type]?.by_cat?.[key]) || [];
+    title = key + ' — Affected Facilities';
+    if (type === 'sd') title += ' (Shutdown-Causing)';
+  } else {
+    items = (DRILLDOWN[type]?.by_issue?.[key]?.[subkey]) || [];
+    title = key + ': ' + subkey + ' — Affected Facilities';
+    if (type === 'sd') title += ' (Shutdown-Causing)';
+  }
+  if (!items.length) { alert('No facility data available for this selection.'); return; }
+  document.getElementById('modalTitle').textContent = title;
+  let body = '';
+  items.forEach(it => {
+    const dates = it.dates.map(d => {
+      const dt = new Date(d + 'T00:00:00');
+      return `<span class="modal-date-tag">${dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</span>`;
+    }).join('');
+    body += `<div class="modal-fac">
+      <div class="modal-fac-name">${it.facility}<span class="modal-count">${it.count} day${it.count>1?'s':''}</span></div>
+      <div class="modal-dates">${dates}</div>
+    </div>`;
+  });
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('drillModal').classList.add('open');
+}
+
+function closeDrill() {
+  document.getElementById('drillModal').classList.remove('open');
+}
+document.getElementById('drillModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDrill();
+});
+
+// ── Monthly trend ──────────────────────────────────────────────────────────
+new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels: ["Jan", "Feb", "Mar", "Apr", "May*"],
+    datasets: [{
+      label: 'Portfolio Uptime %',
+      data: [99.6, 99.6, 99.2, 99.1, 98.1],
+      borderColor: '#0f5f73',
+      backgroundColor: 'rgba(15,95,115,0.06)',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#0f5f73',
+      pointRadius: 5,
+      tension: 0.3,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      y: {
+        min: 60, max: 100,
+        ticks: { callback: v => v + '%', font: {size:11}, stepSize: 5 },
+        grid: { color: '#f1f5f9' }
+      },
+      x: { grid: { display: false }, ticks: { font: {size:11} } }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => ' ' + c.parsed.y.toFixed(1) + '%' } }
+    }
+  },
+  plugins: [{
+    id: 'targetLine',
+    afterDraw(chart) {
+      const {ctx, scales} = chart;
+      const y = scales.y.getPixelForValue(97);
+      ctx.save();
+      ctx.setLineDash([6,4]);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(chart.chartArea.left, y);
+      ctx.lineTo(chart.chartArea.right, y);
+      ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 10px Segoe UI';
+      ctx.fillText('97% target', chart.chartArea.right - 70, y - 5);
+      ctx.restore();
+    }
+  }]
+});
+
+// ── Nested donut — both rings clickable ────────────────────────────────────
+function makeNestedDonut(id, outerLbls, outerDat, outerCols, innerLbls, innerDat, innerCols, outerCatMap, drillType) {
+  new Chart(document.getElementById(id).getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: outerLbls,
+      datasets: [
+        {
+          // Rendered as OUTER ring (categories)
+          label: 'Category',
+          data: innerDat,
+          backgroundColor: innerCols,
+          borderWidth: 2, borderColor: '#fff',
+          weight: 1.4, hoverOffset: 6
+        },
+        {
+          // Rendered as INNER ring (issue types)
+          label: 'Issue Type',
+          data: outerDat,
+          backgroundColor: outerCols,
+          borderWidth: 1, borderColor: '#fff',
+          weight: 1, hoverOffset: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '35%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: function(items) {
+              const item = items[0];
+              // datasets[0] = outer ring = category; datasets[1] = inner ring = issue type
+              if (item.datasetIndex === 0) return innerLbls[item.dataIndex] + ' (Category)';
+              return outerLbls[item.dataIndex] + ' — ' + outerCatMap[item.dataIndex];
+            },
+            label: function(item) {
+              const total = item.dataset.data.reduce((a,b)=>a+b,0);
+              const pct   = (item.parsed * 100 / total).toFixed(1);
+              return ` ${item.parsed} issues (${pct}%)`;
+            },
+            afterLabel: () => ' Click to see affected facilities'
+          }
+        }
+      },
+      onClick: function(evt, elements) {
+        if (!elements.length) return;
+        const el    = elements[0];
+        const dsIdx = el.datasetIndex;
+        const idx   = el.index;
+        if (dsIdx === 0) {
+          // Outer ring: category clicked
+          openDrill(drillType, innerLbls[idx], null);
+        } else {
+          // Inner ring: specific issue type clicked
+          openDrill(drillType, outerCatMap[idx], outerLbls[idx]);
+        }
+      }
+    }
+  });
+}
+
+makeNestedDonut('donutAll',
+  ["External electricity", "Bulb", "Switch", "Wiring", "Boring starter", "Boring pump", "Water motor pump", "Stabilizer", "Other electrical", "External water supply", "Toilet tap", "Basin tap", "Other plumbing", "Base pipe", "Pipe", "Socket", "Urinal tap", "Facility pipe", "Wastewater (external)", "Wastewater repair", "Gate", "Table / chair", "Lock", "Wastewater cleaning", "Wall", "Floor", "Painting", "Roof", "Other infra", "PC battery", "PC charger", "Charger", "Tablet repair", "PC machine", "Other tech", "Internet", "Sarde.ka.karan.data."], [66, 24, 19, 19, 17, 12, 7, 7, 5, 36, 22, 12, 10, 9, 9, 8, 8, 7, 9, 6, 3, 2, 2, 2, 1, 1, 1, 1, 1, 7, 5, 3, 2, 2, 1, 1, 1], ["#378add", "#4492df", "#529ae1", "#60a2e4", "#6eaae6", "#7bb2e8", "#89baeb", "#97c2ed", "#a5caef", "#1d9e75", "#2ca47e", "#3cab87", "#4bb291", "#5bb89a", "#6abfa4", "#7ac6ad", "#89ccb7", "#99d3c0", "#d85a30", "#da633b", "#dc6c46", "#de7552", "#e07e5d", "#e28768", "#e49074", "#e7997f", "#e9a28b", "#ebab96", "#edb4a1", "#ba7517", "#c0812c", "#c68e41", "#cc9a56", "#d3a76c", "#d9b481", "#dfc096", "#9e9e9e"],
+  ["Electrical", "Plumbing", "Infrastructure", "Technology", "Other"],  [176, 121, 29, 21, 1],  ["#378ADD", "#1D9E75", "#D85A30", "#BA7517", "#9E9E9E"],
+  ["Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure", "Technology", "Technology", "Technology", "Technology", "Technology", "Technology", "Technology", "Other"], 'all'
+);
+makeNestedDonut('donutSd',
+  ["External electricity", "Boring pump", "Boring starter", "Stabilizer", "Wiring", "Other electrical", "Switch", "External water supply", "Other plumbing", "Toilet tap", "Basin tap", "Socket", "Wastewater (external)", "Wastewater repair", "Gate", "Wastewater cleaning"], [13, 5, 2, 1, 1, 1, 1, 32, 1, 1, 1, 1, 8, 4, 2, 1], ["#378add", "#4994e0", "#5b9fe3", "#6eaae6", "#80b4e9", "#92bfec", "#a5caef", "#1d9e75", "#3cab87", "#5bb89a", "#7ac6ad", "#99d3c0", "#d85a30", "#df7855", "#e6967b", "#edb4a1"],
+  ["Electrical", "Plumbing", "Infrastructure"],  [24, 36, 15],  ["#378ADD", "#1D9E75", "#D85A30"],
+  ["Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Electrical", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Plumbing", "Infrastructure", "Infrastructure", "Infrastructure", "Infrastructure"], 'sd'
+);
+
+// ── Raw data toggle ────────────────────────────────────────────────────────
+function toggleDetail(tableId, btn) {
+  const tbl = document.getElementById(tableId);
+  const on  = tbl.classList.toggle('show-detail');
+  btn.textContent = on ? 'Hide raw data' : 'Show raw data';
+}
+</script>
+</body>
+</html>
